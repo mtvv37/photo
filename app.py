@@ -1,4 +1,7 @@
 import io
+import os
+import shutil
+import sys
 
 import cv2
 import numpy as np
@@ -8,6 +11,26 @@ from PIL import Image
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20 MB
+
+
+def locate_tesseract_on_windows():
+    """Sur Windows, l'installeur ne modifie pas toujours le PATH : on
+    cherche l'executable aux emplacements par defaut pour eviter a
+    l'utilisateur de configurer quoi que ce soit."""
+    if sys.platform != "win32" or shutil.which("tesseract"):
+        return
+    candidates = [
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+        r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+        os.path.expandvars(r"%LOCALAPPDATA%\Programs\Tesseract-OCR\tesseract.exe"),
+    ]
+    for path in candidates:
+        if os.path.isfile(path):
+            pytesseract.pytesseract.tesseract_cmd = path
+            return
+
+
+locate_tesseract_on_windows()
 
 
 def preprocess_for_ocr(image_rgb):
